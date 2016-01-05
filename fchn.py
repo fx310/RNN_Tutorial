@@ -22,9 +22,11 @@ def generate_sentence(model,word_to_index,index_to_word,sentence_start_token,sen
     return sentence_str
 
 def main():
-    if len(sys.argv) != 5:
-        print "usage: python fchn.py vocab input.txt model.npy (train|test|gens|gchk)"
+    if len(sys.argv) != 7:
+        print "usage: python fchn.py vocab input.txt model.npy hidden bptt (train|test|gens|gchk)"
         sys.exit(0)
+
+    hidden, bptt = int(sys.argv[4]), int(sys.argv[5])
 
     # vocab
     sentence_start_token = "SENTENCE_START"
@@ -72,26 +74,25 @@ def main():
     # print X_train[0]
     # print y_train[0]
 
-    if sys.argv[4] == 'train':
+    if sys.argv[6] == 'train':
         np.random.seed(10)
-        model = RNNNumpy(word_dim=vocab_size, hidden_dim=100, bptt_truncate=4)
-        # model.train_with_sgd(X_train[:1000], y_train[:1000], nepoch=20, evaluate_loss_after=1)
-        model.train_with_sgd(X_train[:10000], y_train[:10000], nepoch=20, evaluate_loss_after=1)
+        model = RNNNumpy(word_dim=vocab_size, hidden_dim=hidden, bptt_truncate=bptt)
+        model.train_with_sgd(X_train, y_train, nepoch=20, evaluate_loss_after=1)
         model.save(sys.argv[3])
     
-    if sys.argv[4] == 'test':
+    if sys.argv[6] == 'test':
         np.random.seed(10)
         model = RNNNumpy(word_dim=vocab_size)
         model.load(sys.argv[3])
         print "Actual loss: %f" % model.calculate_loss(X_train, y_train)
     
-    if sys.argv[4] == 'gchk':
+    if sys.argv[6] == 'gchk':
         grad_check_vocab_size = 100
         np.random.seed(10)
-        model = RNNNumpy(grad_check_vocab_size, 10, bptt_truncate=4)
+        model = RNNNumpy(grad_check_vocab_size, 10, 3)
         model.gradient_check([0,1,2,3], [1,2,3,4])
 
-    if sys.argv[4] == 'gens':
+    if sys.argv[6] == 'gens':
         np.random.seed(10)
         model = RNNNumpy(word_dim=vocab_size)
         model.load(sys.argv[3])
